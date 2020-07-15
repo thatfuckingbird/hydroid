@@ -34,7 +34,7 @@ const QVariantMap defaultSettings = {
   {"localTagRepoName", "my tags"}};
 
 HydroidSettings::HydroidSettings(QObject* parent) :
-    QSettings(parent)
+    QSettings{QSettings::IniFormat, QSettings::UserScope, "Hydroid", "Hydroid", parent}
 {
 #ifdef Q_OS_WASM
     std::function<void(void)> *testSettingsReady = new std::function<void(void)>();
