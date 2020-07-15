@@ -23,6 +23,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QNetworkRequest>
 #include <QTimer>
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+constexpr auto settingsFormat = QSettings::NativeFormat;
+#else
+constexpr auto settingsFormat = QSettings::IniFormat;
+#endif
+
 const QVariantMap defaultSettings = {
   {"apiURL", "http://127.0.0.1:45869"},
   {"apiKey", ""},
@@ -34,7 +40,7 @@ const QVariantMap defaultSettings = {
   {"localTagRepoName", "my tags"}};
 
 HydroidSettings::HydroidSettings(QObject* parent) :
-    QSettings{QSettings::IniFormat, QSettings::UserScope, "Hydroid", "Hydroid", parent}
+    QSettings{settingsFormat, QSettings::UserScope, "Hydroid", "Hydroid", parent}
 {
 #ifdef Q_OS_WASM
     std::function<void(void)> *testSettingsReady = new std::function<void(void)>();
