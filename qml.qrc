@@ -1,0 +1,27 @@
+<RCC>
+    <qresource prefix="/">
+        <file>src/main.qml</file>
+        <file>src/pages/FilePage.qml</file>
+        <file>assets/icons/icon.png</file>
+        <file>assets/icons/menu.svg</file>
+        <file>assets/icons/plus-circle.svg</file>
+        <file>src/dialogs/Viewer.qml</file>
+        <file>src/dialogs/SettingsDialog.qml</file>
+        <file>src/dialogs/SendURLsDialog.qml</file>
+        <file>src/widgets/WideTextField.qml</file>
+        <file>src/dialogs/HelpDialog.qml</file>
+        <file>src/dialogs/AboutDialog.qml</file>
+        <file>assets/help/agpl-3.0-standalone.html</file>
+        <file>assets/help/help.html</file>
+        <file>src/pages/SearchBar.qml</file>
+        <file>assets/icons/plus-box.svg</file>
+        <file>src/dialogs/AddTagDialog.qml</file>
+        <file>assets/icons/arrow-collapse-left.svg</file>
+        <file>assets/icons/arrow-collapse-right.svg</file>
+        <file>assets/icons/filter.svg</file>
+        <file>assets/icons/selection.svg</file>
+        <file>src/pages/FilePageTab.qml</file>
+        <file>src/pages/TabPopupMenu.qml</file>
+        <file>src/widgets/WideMenu.qml</file>
+    </qresource>
+</RCC>
