@@ -32,6 +32,10 @@ wasm {
 QMAKE_LFLAGS += -s \"BINARYEN_TRAP_MODE=\'clamp\'\"
 }
 
+android {
+QT += androidextras
+}
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

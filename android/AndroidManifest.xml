@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <manifest package="org.Hydroid.Hydroid" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="-- %%INSERT_VERSION_NAME%% --" android:versionCode="-- %%INSERT_VERSION_CODE%% --" android:installLocation="auto">
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="27"/>
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="28"/>
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
@@ -76,7 +76,7 @@
                 * minimal - useful for Quick Controls 2 apps, it is much faster than "full"
                 * none - useful for apps that don't use any of the above Qt modules
                 -->
-            <meta-data android:name="android.app.extract_android_style" android:value="default"/>
+            <meta-data android:name="android.app.extract_android_style" android:value="minimal"/>
             <!-- extract android style -->
     </activity>
 
@@ -84,4 +84,5 @@
 
     </application>
 
+<uses-permission android:name="android.permission.INTERNET"/>
 </manifest>

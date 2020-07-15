@@ -33,6 +33,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "version.h"
 #include "filecache.h"
 
+#ifdef Q_OS_ANDROID
+#include <QtAndroidExtras/QtAndroid>
+#endif
+
 void debugMsgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     QByteArray localMsg = msg.toLocal8Bit();
@@ -81,6 +85,10 @@ int main(int argc, char* argv[])
     app.setOrganizationName("Hydroid");
     app.setOrganizationDomain({});
     app.setQuitOnLastWindowClosed(true);
+
+#ifdef Q_OS_ANDROID
+    QtAndroid::requestPermissions({"android.permission.INTERNET"}, [](const QtAndroid::PermissionResultMap&){});
+#endif
 
     //qInstallMessageHandler(&debugMsgHandler);
 
