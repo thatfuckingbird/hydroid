@@ -29,7 +29,9 @@ QML_IMPORT_PATH =
 QML_DESIGNER_IMPORT_PATH =
 
 wasm {
-QMAKE_LFLAGS += -s \"BINARYEN_TRAP_MODE=\'clamp\'\"
+QMAKE_WASM_TOTAL_MEMORY = 1GB
+#Old, probably won't be needed anymore.
+#QMAKE_LFLAGS += -s \"BINARYEN_TRAP_MODE=\'clamp\'\"
 }
 
 android {

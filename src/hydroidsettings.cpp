@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QGuiApplication>
 #include <QVariantMap>
 #include <QNetworkRequest>
+#include <QTimer>
 
 const QVariantMap defaultSettings = {
   {"apiURL", "http://127.0.0.1:45869"},
@@ -35,6 +36,18 @@ const QVariantMap defaultSettings = {
 HydroidSettings::HydroidSettings(QObject* parent) :
     QSettings(parent)
 {
+#ifdef Q_OS_WASM
+    std::function<void(void)> *testSettingsReady = new std::function<void(void)>();
+    *testSettingsReady = [=](){
+        if (this->status() == QSettings::NoError) {
+            delete testSettingsReady;
+            emit this->settingsReady();
+        } else {
+            QTimer::singleShot(10, *testSettingsReady);
+        }
+    };
+    (*testSettingsReady)();
+#endif
 }
 
 HydroidSettings& HydroidSettings::hydroidSettings()
@@ -43,27 +56,8 @@ HydroidSettings& HydroidSettings::hydroidSettings()
     return settings;
 }
 
-void HydroidSettings::waitForReady() const
-{
-#ifdef Q_OS_WASM
-    //QSettings is async on wasm, have to wait until it becomes available.
-    while(this->status() != QSettings::NoError)
-    {
-        QGuiApplication::processEvents();
-    }
-#endif
-}
-
-void HydroidSettings::sync()
-{
-#ifdef Q_OS_WASM
-    QSettings::sync();
-#endif
-}
-
 bool HydroidSettings::getBoolean(const QString& key) const
 {
-    waitForReady();
     if(!this->contains(key))
     {
         if(defaultSettings.contains(key)) return defaultSettings.value(key).toBool();
@@ -74,14 +68,12 @@ bool HydroidSettings::getBoolean(const QString& key) const
 
 void HydroidSettings::setBoolean(const QString& key, bool value)
 {
-    waitForReady();
     this->setValue(key, value);
     sync();
 }
 
 QString HydroidSettings::getString(const QString& key) const
 {
-    waitForReady();
     if(!this->contains(key))
     {
         if(defaultSettings.contains(key)) return defaultSettings.value(key).toString();
@@ -92,14 +84,12 @@ QString HydroidSettings::getString(const QString& key) const
 
 void HydroidSettings::setString(const QString& key, const QString& value)
 {
-    waitForReady();
     this->setValue(key, value);
     sync();
 }
 
 void HydroidSettings::removeSavedPage(int uid)
 {
-    waitForReady();
     beginGroup("pages");
     beginGroup(QString::number(uid));
     remove("files");
@@ -111,7 +101,6 @@ void HydroidSettings::removeSavedPage(int uid)
 
 void HydroidSettings::savePageModel(ThumbGridModel* model)
 {
-    waitForReady();
     const auto serializedValue = model->serialize();
     beginGroup("pages");
     beginGroup(QString::number(model->pageID()));
@@ -123,7 +112,6 @@ void HydroidSettings::savePageModel(ThumbGridModel* model)
 
 void HydroidSettings::savePageSearchTags(int uid, const QStringList& tags)
 {
-    waitForReady();
     beginGroup("pages");
     beginGroup(QString::number(uid));
     setValue("searchBarTags", tags);
@@ -134,7 +122,6 @@ void HydroidSettings::savePageSearchTags(int uid, const QStringList& tags)
 
 void HydroidSettings::restoreSavedPageModel(int uid, ThumbGridModel* targetModel)
 {
-    waitForReady();
     beginGroup("pages");
     beginGroup(QString::number(uid));
     const auto serializedData = value("files").toByteArray();
@@ -145,7 +132,6 @@ void HydroidSettings::restoreSavedPageModel(int uid, ThumbGridModel* targetModel
 
 QStringList HydroidSettings::getSavedPageTags(int uid)
 {
-    waitForReady();
     beginGroup("pages");
     beginGroup(QString::number(uid));
     QStringList val = value("searchBarTags").toStringList();
@@ -156,14 +142,12 @@ QStringList HydroidSettings::getSavedPageTags(int uid)
 
 void HydroidSettings::clearSavedSession()
 {
-    waitForReady();
     remove("pages");
     sync();
 }
 
 int HydroidSettings::getInteger(const QString& key) const
 {
-    waitForReady();
     if(!this->contains(key))
     {
         if(defaultSettings.contains(key)) return defaultSettings.value(key).toInt();
@@ -174,14 +158,12 @@ int HydroidSettings::getInteger(const QString& key) const
 
 void HydroidSettings::setInteger(const QString& key, int value)
 {
-    waitForReady();
     this->setValue(key, value);
     sync();
 }
 
 QVector<int> HydroidSettings::getSavedPageIDs()
 {
-    waitForReady();
     beginGroup("pages");
     QVector<int> res;
     for(const auto& group: childGroups())

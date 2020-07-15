@@ -28,8 +28,6 @@ class HydroidSettings : public QSettings
 
 private:
     HydroidSettings(QObject* parent = 0);
-    void waitForReady() const;
-    void sync();
 
 public:
     static HydroidSettings& hydroidSettings();
@@ -46,4 +44,9 @@ public:
     Q_INVOKABLE void clearSavedSession();
     Q_INVOKABLE int getInteger(const QString& key) const;
     Q_INVOKABLE void setInteger(const QString& key, int value);
+
+signals:
+#ifdef Q_OS_WASM
+    void settingsReady();
+#endif
 };

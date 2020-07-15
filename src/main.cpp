@@ -133,19 +133,31 @@ int main(int argc, char* argv[])
       },
       Qt::QueuedConnection);
 
-    engine.addImageProvider("hyimg", new HydroidImageProvider{});
-    engine.rootContext()->setContextProperty("hydroidNativeUtils", new HydroidNativeUtils{});
     engine.rootContext()->setContextProperty("hydroidSettings", &HydroidSettings::hydroidSettings());
-    engine.rootContext()->setContextProperty("hydrusAPI", &HydrusAPI::hydrusAPI());
-    engine.rootContext()->setContextProperty("fileCache", &FileCache::fileCache());
-    engine.rootContext()->setContextProperty("HYDROID_VERSION_MAJOR", HYDROID_VERSION_MAJOR);
-    engine.rootContext()->setContextProperty("HYDROID_VERSION_MINOR", HYDROID_VERSION_MINOR);
-    engine.rootContext()->setContextProperty("HYDROID_VERSION_PATCH", HYDROID_VERSION_PATCH);
-    engine.rootContext()->setContextProperty("HYDROID_VERSION_LABEL", HYDROID_VERSION_LABEL);
-    engine.rootContext()->setContextProperty("HYDROID_EDITION_TEXT", HYDROID_EDITION_TEXT);
-    engine.rootContext()->setContextProperty("HYDROID_COPYRIGHT_YEARS", HYDROID_COPYRIGHT_YEARS);
+    auto loadEngine = [&]() {
+        engine.addImageProvider("hyimg", new HydroidImageProvider{});
+        engine.rootContext()->setContextProperty("hydroidNativeUtils", new HydroidNativeUtils{});
+        engine.rootContext()->setContextProperty("hydrusAPI", &HydrusAPI::hydrusAPI());
+        engine.rootContext()->setContextProperty("fileCache", &FileCache::fileCache());
+        engine.rootContext()->setContextProperty("HYDROID_VERSION_MAJOR", HYDROID_VERSION_MAJOR);
+        engine.rootContext()->setContextProperty("HYDROID_VERSION_MINOR", HYDROID_VERSION_MINOR);
+        engine.rootContext()->setContextProperty("HYDROID_VERSION_PATCH", HYDROID_VERSION_PATCH);
+        engine.rootContext()->setContextProperty("HYDROID_VERSION_LABEL", HYDROID_VERSION_LABEL);
+        engine.rootContext()->setContextProperty("HYDROID_EDITION_TEXT", HYDROID_EDITION_TEXT);
+        engine.rootContext()->setContextProperty("HYDROID_COPYRIGHT_YEARS", HYDROID_COPYRIGHT_YEARS);
 
-    engine.load(url);
+        engine.load(url);
+    };
+
+#ifdef Q_OS_WASM
+    if(HydroidSettings::hydroidSettings().status() == QSettings::NoError) {
+        loadEngine();
+    } else {
+        QObject::connect(&HydroidSettings::hydroidSettings(), &HydroidSettings::settingsReady, loadEngine);
+    }
+#else
+    loadEngine();
+#endif
 
     return app.exec();
 }
