@@ -121,7 +121,7 @@ void TagListModel::removeTags(int fileID)
         bool noTagChangeInProgress = !m_tagUpdateInProgress;
         if(noTagChangeInProgress) beginUpdateTags();
 
-        for(const auto& tag: m_fileIDsToTags[fileID])
+        for(const auto& tag: m_fileIDsToTags.value(fileID))
         {
             auto entry = findTagInSortedRange(tag, 0, m_data.size() - 1);
             if(entry != -1)
@@ -144,7 +144,8 @@ void TagListModel::removeTags(int fileID)
 
 void TagListModel::endUpdateTags()
 {
-    for(auto idx: m_indicesConsideredForRemoval)
+    const auto& cref_indicesConsideredForRemoval = m_indicesConsideredForRemoval; //To avoid detaching Qt container in the following loop.
+    for(auto idx: cref_indicesConsideredForRemoval)
     {
         if(m_data[idx]->count < 1)
         {
@@ -180,14 +181,14 @@ void TagListModel::endUpdateTags()
 
     if(m_data.size() - nullCnt > oldSize)
     {
-        emit this->beginInsertRows({}, oldSize, m_data.size() - nullCnt - 1);
-        emit this->endInsertRows();
+        this->beginInsertRows({}, oldSize, m_data.size() - nullCnt - 1);
+        this->endInsertRows();
     }
     else if(m_data.size() - nullCnt < oldSize)
     {
-        emit this->beginRemoveRows({}, m_data.size() - nullCnt, oldSize - 1);
+        this->beginRemoveRows({}, m_data.size() - nullCnt, oldSize - 1);
         m_data.resize(m_data.size() - nullCnt);
-        emit this->endRemoveRows();
+        this->endRemoveRows();
     }
 
     if(oldSize != m_data.size()) emit this->countChanged(m_data.size());
@@ -201,14 +202,15 @@ void TagListModel::clear()
 {
     if(m_data.size())
     {
-        emit this->beginRemoveRows(QModelIndex{}, 0, m_data.size() - 1);
-        for(auto entry: m_data) delete entry;
-        m_data.clear();
+        this->beginRemoveRows(QModelIndex{}, 0, m_data.size() - 1);
+        const auto& cref_data = this->m_data; //To avoid detaching Qt container in the following loop.
+        for(auto entry: cref_data) delete entry;
+        this->m_data.clear();
         m_fileIDsToTags.clear();
         m_indicesConsideredForRemoval.clear();
         m_tagUpdateInProgress = false;
         emit this->countChanged(m_data.size());
-        emit this->endRemoveRows();
+        this->endRemoveRows();
     }
 }
 
