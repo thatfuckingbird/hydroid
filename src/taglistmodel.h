@@ -39,7 +39,7 @@ public:
         TagTextRole = Qt::UserRole + 1,
         TagCountRole
     };
-    TagListModel(QObject* parent = 0);
+    TagListModel(QObject* parent = nullptr);
 
     //QAbstractListModel functions
     virtual QHash<int, QByteArray> roleNames() const override;

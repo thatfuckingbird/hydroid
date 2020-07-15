@@ -60,7 +60,7 @@ public:
         FileIdRole = Qt::UserRole + 1,
         SelectedRole
     };
-    ThumbGridModel(QObject* parent = 0);
+    ThumbGridModel(QObject* parent = nullptr);
 
     //QAbstractListModel functions
     virtual QHash<int, QByteArray> roleNames() const override;
@@ -117,8 +117,8 @@ private:
     int m_pageID = -1;
     int m_singleSelectedItem = -1;
     int m_queuedMetadataUpdateCount = 0;
-    bool selectionChangedFlag = true;
-    static int pageIDCounter;
+    bool m_selectionChangedFlag = true;
+    static int m_pageIDCounter;
     void setItemSelected(ThumbGridItem& item, bool selected);
     void setItemSelected(ThumbGridItem* item, bool selected);
     void updateSingleSelectedItem(bool force = false);

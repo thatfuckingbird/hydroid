@@ -34,15 +34,6 @@ class FileCache : public QObject
 {
     Q_OBJECT
 
-private:
-    FileCache(QObject* parent = 0);
-    QVector<CacheEntry> m_data;
-    int m_reqCounter = 0;
-    void maintainCache();
-
-private slots:
-    void handleFileReceived(int fileID, const QByteArray& data);
-
 public:
     static FileCache& fileCache();
     Q_INVOKABLE void fetchImage(int fileID, bool highPriority = false);
@@ -50,4 +41,13 @@ public:
 
 signals:
     void imageAvailable(int fileID, QImage image);
+
+private slots:
+    void handleFileReceived(int fileID, const QByteArray& data);
+
+private:
+    FileCache(QObject* parent = nullptr);
+    QVector<CacheEntry> m_data;
+    int m_reqCounter = 0;
+    void maintainCache();
 };

@@ -27,7 +27,7 @@ class HydroidSettings : public QSettings
     Q_OBJECT
 
 private:
-    HydroidSettings(QObject* parent = 0);
+    HydroidSettings(QObject* parent = nullptr);
 
 public:
     static HydroidSettings& hydroidSettings();

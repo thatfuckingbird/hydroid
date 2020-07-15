@@ -21,10 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "taglistmodel.h"
 #include "hydrusapi.h"
 
-int ThumbGridModel::pageIDCounter = 0;
+int ThumbGridModel::m_pageIDCounter = 0;
 
 ThumbGridModel::ThumbGridModel(QObject* parent) :
-    QAbstractListModel(parent), m_pageID(pageIDCounter++)
+    QAbstractListModel(parent), m_pageID(m_pageIDCounter++)
 {
 }
 
@@ -266,7 +266,7 @@ void ThumbGridModel::clearAndLoadData(const QJsonArray& fileIDs)
     m_fileIDMap.clear();
     m_files.clear();
     m_selectedFiles.clear();
-    selectionChangedFlag = true;
+    m_selectionChangedFlag = true;
     this->removeRows(0, this->m_files.size(), {});
     this->insertRows(0, fileIDs.size(), {});
     for(int i = 0; i < fileIDs.size(); ++i)
@@ -387,7 +387,7 @@ QByteArray ThumbGridModel::serialize() const
 void ThumbGridModel::deserialize(int pageID, const QByteArray& data)
 {
     this->m_pageID = pageID;
-    if(pageIDCounter <= m_pageID) pageIDCounter = m_pageID + 1;
+    if(m_pageIDCounter <= m_pageID) m_pageIDCounter = m_pageID + 1;
     QDataStream stream(data);
     int size;
     stream >> size;
@@ -455,7 +455,7 @@ void ThumbGridModel::setItemSelected(ThumbGridItem& item, bool selected)
         if(this->m_tagListModel && this->m_selectedFiles.isEmpty()) this->m_tagListModel->clear();
         m_selectedFiles.insert(&item);
         item.selected = true;
-        selectionChangedFlag = true;
+        m_selectionChangedFlag = true;
         if(m_tagListModel) m_tagListModel->addTags(item.id, item.tags);
     }
     else if(item.selected && !selected)
@@ -469,21 +469,8 @@ void ThumbGridModel::setItemSelected(ThumbGridItem& item, bool selected)
 
 void ThumbGridModel::setItemSelected(ThumbGridItem* item, bool selected)
 {
-    if(!item->selected && selected)
-    {
-        if(this->m_tagListModel && this->m_selectedFiles.isEmpty()) this->m_tagListModel->clear();
-        m_selectedFiles.insert(item);
-        item->selected = true;
-        selectionChangedFlag = true;
-        if(m_tagListModel) m_tagListModel->addTags(item->id, item->tags);
-    }
-    else if(item->selected && !selected)
-    {
-        m_selectedFiles.remove(item);
-        item->selected = false;
-        if(m_tagListModel) m_tagListModel->removeTags(item->id);
-    }
-    fillTagListIfEmptySelection();
+    ThumbGridItem& itemRef = *item;
+    setItemSelected(itemRef, selected);
 }
 
 void ThumbGridModel::updateSingleSelectedItem(bool force)
@@ -502,11 +489,11 @@ void ThumbGridModel::updateSingleSelectedItem(bool force)
 
 void ThumbGridModel::fillTagListIfEmptySelection()
 {
-    if(selectionChangedFlag && this->m_tagListModel)
+    if(m_selectionChangedFlag && this->m_tagListModel)
     {
         if(m_selectedFiles.isEmpty())
         {
-            selectionChangedFlag = false;
+            m_selectionChangedFlag = false;
             this->m_tagListModel->clear();
             this->m_tagListModel->beginUpdateTags();
             for(const auto& f: m_files)

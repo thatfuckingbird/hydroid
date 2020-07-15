@@ -30,11 +30,9 @@ class HydrusAPI : public QObject
 {
     Q_OBJECT
 
-private:
-    explicit HydrusAPI(QObject* parent = nullptr);
-
 public:
     static HydrusAPI& hydrusAPI();
+    Q_INVOKABLE void requestMetadataForViewer(QObject* viewer, const QVector<int>& fileIDs);
 
     enum SearchType
     {
@@ -48,12 +46,11 @@ public:
     };
     Q_ENUM(SearchType)
     Q_ENUM(TagOperation)
-    Q_INVOKABLE void requestMetadataForViewer(QObject* viewer, const QVector<int>& fileIDs);
 
 public slots:
     void fileSearch(const QStringList& tags, bool inbox, bool archive, ThumbGridModel* targetModel, SearchType searchType);
     int updateMetadata(ThumbGridModel* targetModel, const QVector<int>& fileIDs = {});
-    Q_INVOKABLE void sendURLs(const QString& text);
+    void sendURLs(const QString& text);
     int requestFile(int fileID, bool highPriority);
     void updateFileRequestPriority(int fileID, bool highPriority);
     void cancelFileRequest(int requestID);
@@ -69,14 +66,15 @@ private slots:
     void viewerDestroyed(QObject* viewer);
 
 private:
+    explicit HydrusAPI(QObject* parent = nullptr);
     void removeFileRequest(int requestID, bool abort);
-    QNetworkAccessManager* nam = nullptr;
+    QNetworkAccessManager* m_nam = nullptr;
     QNetworkReply* get(const QString& endpoint, const QMap<QString, QString>& args, bool highPriority = false);
     QNetworkReply* post(const QString& endpoint, const QJsonDocument& body, bool highPriority = false);
-    QMap<ThumbGridModel*, QNetworkReply*> modelsToFileSearchJobs;
-    QMap<QNetworkReply*, ThumbGridModel*> fileSearchJobsToModels;
-    QMap<ThumbGridModel*, QVector<QNetworkReply*>> modelsToMetadataSearchJobs;
-    QMap<QNetworkReply*, ThumbGridModel*> metadataSearchJobsToModels;
+    QMap<ThumbGridModel*, QNetworkReply*> m_modelsToFileSearchJobs;
+    QMap<QNetworkReply*, ThumbGridModel*> m_fileSearchJobsToModels;
+    QMultiMap<ThumbGridModel*, QNetworkReply*> m_modelsToMetadataSearchJobs;
+    QMap<QNetworkReply*, ThumbGridModel*> m_metadataSearchJobsToModels;
     QMap<QNetworkReply*, QObject*> m_metadataSearchJobsToViewers;
     QMultiMap<QObject*, QNetworkReply*> m_viewersToMetadataSearchJobs;
     int m_fileRequestCounter = 0;

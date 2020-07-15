@@ -31,9 +31,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 HydrusAPI::HydrusAPI(QObject* parent) :
     QObject(parent)
 {
-    this->nam = new QNetworkAccessManager{this};
-    this->nam->setTransferTimeout(HydroidSettings::hydroidSettings().getInteger("networkTimeout"));
-    connect(this->nam, &QNetworkAccessManager::finished, this, &HydrusAPI::handleNetworkReplyFinished);
+    this->m_nam = new QNetworkAccessManager{this};
+    this->m_nam->setTransferTimeout(HydroidSettings::hydroidSettings().getInteger("networkTimeout"));
+    connect(this->m_nam, &QNetworkAccessManager::finished, this, &HydrusAPI::handleNetworkReplyFinished);
 }
 
 HydrusAPI& HydrusAPI::hydrusAPI()
@@ -65,7 +65,7 @@ void HydrusAPI::requestMetadataForViewer(QObject* viewer, const QVector<int>& fi
 
 void HydrusAPI::fileSearch(const QStringList& tags, bool inbox, bool archive, ThumbGridModel* targetModel, SearchType searchType)
 {
-    if(auto job = modelsToFileSearchJobs.value(targetModel, nullptr))
+    if(auto job = m_modelsToFileSearchJobs.value(targetModel, nullptr))
     {
         job->abort();
     }
@@ -85,8 +85,8 @@ void HydrusAPI::fileSearch(const QStringList& tags, bool inbox, bool archive, Th
     connect(targetModel, &ThumbGridModel::destroyed, this, &HydrusAPI::modelDestroyed, Qt::UniqueConnection);
 
     auto reply = this->get("/get_files/search_files", searchParams);
-    fileSearchJobsToModels[reply] = targetModel;
-    modelsToFileSearchJobs[targetModel] = reply;
+    m_fileSearchJobsToModels[reply] = targetModel;
+    m_modelsToFileSearchJobs[targetModel] = reply;
     if(searchType == NoMetadataSearch)
     {
         reply->setProperty("noMetadataSearch", true);
@@ -122,8 +122,8 @@ int HydrusAPI::updateMetadata(ThumbGridModel* targetModel, const QVector<int>& f
         connect(targetModel, &ThumbGridModel::destroyed, this, &HydrusAPI::modelDestroyed, Qt::UniqueConnection);
 
         auto reply = this->get("/get_files/file_metadata", searchParams);
-        metadataSearchJobsToModels[reply] = targetModel;
-        modelsToMetadataSearchJobs[targetModel].append(reply);
+        m_metadataSearchJobsToModels[reply] = targetModel;
+        m_modelsToMetadataSearchJobs.insert(targetModel, reply);
         ++req_counter;
     }
     targetModel->setQueuedMetadataUpdateCount(targetModel->queuedMetadataUpdateCount() + req_counter);
@@ -188,7 +188,7 @@ void HydrusAPI::cancelFileRequest(int requestID)
 
 void HydrusAPI::setTimeout(int timeout)
 {
-    this->nam->setTransferTimeout(timeout);
+    this->m_nam->setTransferTimeout(timeout);
 }
 
 void HydrusAPI::updateTags(const QString& hash, QVariant updateData)
@@ -216,7 +216,7 @@ QNetworkReply* HydrusAPI::get(const QString& endpoint, const QMap<QString, QStri
     if(highPriority) req.setPriority(QNetworkRequest::HighPriority);
     req.setRawHeader("Hydrus-Client-API-Access-Key", accessKey.toUtf8());
 
-    return nam->get(req);
+    return m_nam->get(req);
 }
 
 QNetworkReply* HydrusAPI::post(const QString& endpoint, const QJsonDocument& body, bool highPriority)
@@ -229,15 +229,15 @@ QNetworkReply* HydrusAPI::post(const QString& endpoint, const QJsonDocument& bod
     req.setRawHeader("Hydrus-Client-API-Access-Key", accessKey.toUtf8());
     req.setRawHeader("Content-Type", "application/json");
 
-    return nam->post(req, body.toJson());
+    return m_nam->post(req, body.toJson());
 }
 
 void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
 {
-    if(auto model = fileSearchJobsToModels.value(reply, nullptr))
+    if(auto model = m_fileSearchJobsToModels.value(reply, nullptr))
     {
-        fileSearchJobsToModels.remove(reply);
-        modelsToFileSearchJobs.remove(model);
+        m_fileSearchJobsToModels.remove(reply);
+        m_modelsToFileSearchJobs.remove(model);
 
         if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
         {
@@ -249,13 +249,12 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
             //TODO...
         }
     }
-    else if(auto model = metadataSearchJobsToModels.value(reply, nullptr))
+    else if(auto model = m_metadataSearchJobsToModels.value(reply, nullptr))
     {
-        metadataSearchJobsToModels.remove(reply);
-        if(modelsToMetadataSearchJobs.count(model))
+        m_metadataSearchJobsToModels.remove(reply);
+        if(m_modelsToMetadataSearchJobs.count(model))
         {
-            modelsToMetadataSearchJobs[model].removeOne(reply);
-            if(!modelsToMetadataSearchJobs[model].size()) modelsToMetadataSearchJobs.remove(model);
+            m_modelsToMetadataSearchJobs.remove(model, reply);
         }
 
         if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
@@ -269,7 +268,7 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
 
         model->setQueuedMetadataUpdateCount(model->queuedMetadataUpdateCount() - 1);
 
-        if(!modelsToMetadataSearchJobs.count(model)) model->setMetadataLoading(false);
+        if(!m_modelsToMetadataSearchJobs.count(model)) model->setMetadataLoading(false);
     }
     else if(auto fileReqIDs = m_fileJobsToRequestIDs.values(reply); !fileReqIDs.isEmpty())
     {
@@ -320,12 +319,12 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
 
 void HydrusAPI::modelDestroyed(QObject* model)
 {
-    modelsToFileSearchJobs.remove(static_cast<ThumbGridModel*>(model));
-    for(auto it = fileSearchJobsToModels.begin(); it != fileSearchJobsToModels.end();)
+    m_modelsToFileSearchJobs.remove(static_cast<ThumbGridModel*>(model));
+    for(auto it = m_fileSearchJobsToModels.begin(); it != m_fileSearchJobsToModels.end();)
     {
         if(it.value() == model)
         {
-            it = fileSearchJobsToModels.erase(it);
+            it = m_fileSearchJobsToModels.erase(it);
         }
         else
         {
@@ -333,12 +332,12 @@ void HydrusAPI::modelDestroyed(QObject* model)
         }
     }
 
-    modelsToMetadataSearchJobs.remove(static_cast<ThumbGridModel*>(model));
-    for(auto it = metadataSearchJobsToModels.begin(); it != metadataSearchJobsToModels.end();)
+    m_modelsToMetadataSearchJobs.remove(static_cast<ThumbGridModel*>(model));
+    for(auto it = m_metadataSearchJobsToModels.begin(); it != m_metadataSearchJobsToModels.end();)
     {
         if(it.value() == model)
         {
-            it = metadataSearchJobsToModels.erase(it);
+            it = m_metadataSearchJobsToModels.erase(it);
         }
         else
         {
