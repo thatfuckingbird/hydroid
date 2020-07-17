@@ -338,4 +338,8 @@ ColumnLayout {
         let viewer = viewerComponent.createObject(window, props)
         viewer.open()
     }
+
+    function restoreSidebar() {
+        sideBarPane.SplitView.preferredWidth = window.width * 0.2
+    }
 }

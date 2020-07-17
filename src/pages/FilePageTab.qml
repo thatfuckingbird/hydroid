@@ -24,11 +24,9 @@ TabButton {
     property var page: undefined
 
     function showMenu() {
-        if (mainTabBar.count > 3) {
-            let menu = mainTabBar.tabPopupMenu.createObject(window);
-            menu.tab = this;
-            menu.popup();
-        }
+        let menu = mainTabBar.tabPopupMenu.createObject(window, {tab: this, allowCloseOptions: mainTabBar.count > 3});
+        menu.tab = this;
+        menu.popup();
     }
 
     function close() {

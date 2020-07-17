@@ -22,13 +22,25 @@ import QtQuick.Controls 2.14
 
 WideMenu {
     property var tab: undefined
+    property bool allowCloseOptions: false
 
     MenuItem {
+        text: "Restore sidebar to default size"
+        onClicked: tab.page.restoreSidebar()
+    }
+
+    MenuItem {
+        visible: allowCloseOptions
+        enabled: allowCloseOptions
+        height: allowCloseOptions ? implicitHeight : 0
         text: "Close this tab"
         onClicked: tab.close()
     }
 
     MenuItem {
+        visible: allowCloseOptions
+        enabled: allowCloseOptions
+        height: allowCloseOptions ? implicitHeight : 0
         text: "Close other tabs"
         onClicked: tab.closeOthers()
     }
