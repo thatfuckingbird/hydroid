@@ -38,6 +38,7 @@ Dialog {
         metadataRequestSize.value = hydroidSettings.getInteger("metadataRequestSize");
         networkTimeout.value = hydroidSettings.getInteger("networkTimeout");
         localTagRepoName.text = hydroidSettings.getString("localTagRepoName");
+        startFullScreen.checked = hydroidSettings.getBoolean("startFullScreen")
     }
 
     contentItem: ColumnLayout {
@@ -146,6 +147,13 @@ Dialog {
 
             text: "Restore last session on startup"
             onCheckStateChanged: hydroidSettings.setBoolean("restoreLastSessionOnStartup", checked)
+        }
+
+        CheckBox {
+            id: startFullScreen
+
+            text: "Start fullscreen"
+            onCheckStateChanged: hydroidSettings.setBoolean("startFullScreen", checked)
         }
 
     }

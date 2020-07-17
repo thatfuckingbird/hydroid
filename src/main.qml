@@ -49,7 +49,13 @@ ApplicationWindow {
     title: "Hydroid"
     Material.theme: Material.Dark
     Material.accent: Material.Blue
-    Component.onCompleted: showMaximized()
+    Component.onCompleted: {
+        if(hydroidSettings.getBoolean("startFullScreen")) {
+            showFullScreen()
+        } else {
+            showMaximized()
+        }
+    }
 
     ColumnLayout {
         width: parent.width

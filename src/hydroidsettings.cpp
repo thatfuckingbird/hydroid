@@ -40,6 +40,11 @@ const QVariantMap defaultSettings = {
   {"restoreLastSessionOnStartup", true},
   {"metadataRequestSize", 256},
   {"networkTimeout", QNetworkRequest::DefaultTransferTimeoutConstant},
+#ifdef Q_OS_ANDROID
+  {"startFullScreen", true},
+#else
+  {"startFullScreen", false},
+#endif
   {"localTagRepoName", "my tags"}};
 
 HydroidSettings::HydroidSettings(QObject* parent) :
