@@ -266,11 +266,15 @@ ThumbGridItem* ThumbGridModel::getItemByFileID(int fileID) const
 
 void ThumbGridModel::clearAndLoadData(const QJsonArray& fileIDs)
 {
-    m_fileIDMap.clear();
-    m_files.clear();
-    m_selectedFiles.clear();
+    if(m_files.size()) {
+        this->beginRemoveRows({}, 0, m_files.size() - 1);
+        m_fileIDMap.clear();
+        m_files.clear();
+        m_selectedFiles.clear();
+        this->endRemoveRows();
+    }
+    if(m_tagListModel) m_tagListModel->clear();
     m_selectionChangedFlag = true;
-    this->removeRows(0, this->m_files.size(), {});
     this->insertRows(0, fileIDs.size(), {});
     for(int i = 0; i < fileIDs.size(); ++i)
     {
