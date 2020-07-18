@@ -149,13 +149,13 @@ ColumnLayout {
                         text: {
                             if(thumbGridModel.filesLoading && thumbGridModel.metadataLoading)
                             {
-                                `Loading file list and ${thumbGridModel.queuedMetadataUpdateCount} metadata updates…`
+                                `Waiting for file list and ${thumbGridModel.queuedMetadataUpdateCount} metadata updates…`
                             } else if(thumbGridModel.metadataLoading)
                             {
-                                `Loading ${thumbGridModel.queuedMetadataUpdateCount} metadata updates…`
+                                `Waiting for ${thumbGridModel.queuedMetadataUpdateCount} metadata updates…`
                             } else if(thumbGridModel.filesLoading)
                             {
-                                "Loading file list…"
+                                "Waiting for file list…"
                             } else
                             {
                                 ""

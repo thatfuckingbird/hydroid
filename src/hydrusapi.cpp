@@ -97,15 +97,16 @@ void HydrusAPI::fileSearch(const QStringList& tags, bool inbox, bool archive, Th
     }
 }
 
-int HydrusAPI::updateMetadata(ThumbGridModel* targetModel, const QVector<int>& fileIDs)
+int HydrusAPI::updateMetadata(ThumbGridModel *targetModel)
 {
-    if(targetModel->count() == 0) return 0;
-    if(fileIDs.isEmpty())
-    {
-        return updateMetadata(targetModel, targetModel->allFileIDs());
-    }
+    const auto ids = targetModel->allFileIDs();
+    targetModel->setWaitingForMetadataUpdate(ids);
+    return this->updateMetadataForIDs(ids);
+}
 
-    targetModel->setMetadataLoading(true);
+int HydrusAPI::updateMetadataForIDs(const QVector<int>& fileIDs)
+{
+    if(fileIDs.isEmpty()) return 0;
 
     int req_counter = 0;
     const int batchSize = HydroidSettings::hydroidSettings().getInteger("metadataRequestSize");
@@ -123,14 +124,10 @@ int HydrusAPI::updateMetadata(ThumbGridModel* targetModel, const QVector<int>& f
         QMap<QString, QString> searchParams;
         searchParams["file_ids"] = QUrl::toPercentEncoding(array);
 
-        connect(targetModel, &ThumbGridModel::destroyed, this, &HydrusAPI::modelDestroyed, Qt::UniqueConnection);
-
         auto reply = this->get("/get_files/file_metadata", searchParams);
-        m_metadataSearchJobsToModels[reply] = targetModel;
-        m_modelsToMetadataSearchJobs.insert(targetModel, reply);
+        m_metadataUpdateJobs.insert(reply);
         ++req_counter;
     }
-    targetModel->setQueuedMetadataUpdateCount(targetModel->queuedMetadataUpdateCount() + req_counter);
     return req_counter;
 }
 
@@ -253,27 +250,26 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
             //TODO...
         }
     }
-    else if(auto model = m_metadataSearchJobsToModels.value(reply, nullptr))
+    else if(m_metadataUpdateJobs.contains(reply))
     {
-        m_metadataSearchJobsToModels.remove(reply);
-        if(m_modelsToMetadataSearchJobs.count(model))
-        {
-            m_modelsToMetadataSearchJobs.remove(model, reply);
-        }
+        m_metadataUpdateJobs.remove(reply);
 
         if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
         {
-            model->loadMetadata(QJsonDocument::fromJson(reply->readAll())["metadata"].toArray());
+            auto metadata = QJsonDocument::fromJson(reply->readAll())["metadata"].toArray();
+            MetadataCache::metadataCache().beginDataUpdate();
+            for(int i = 0; i < metadata.size(); ++i)
+            {
+                const auto obj = metadata[i].toObject();
+                MetadataCache::metadataCache().setData(obj["file_id"].toInt(), obj);
+            }
+            MetadataCache::metadataCache().endDataUpdate();
         }
         else
         {
             qDebug() << "Metadata search job (for model) http status code: " << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             //TODO...
         }
-
-        model->setQueuedMetadataUpdateCount(model->queuedMetadataUpdateCount() - 1);
-
-        if(!m_modelsToMetadataSearchJobs.count(model)) model->setMetadataLoading(false);
     }
     else if(auto fileReqIDs = m_fileJobsToRequestIDs.values(reply); !fileReqIDs.isEmpty())
     {
@@ -334,19 +330,6 @@ void HydrusAPI::modelDestroyed(QObject* model)
         if(it.value() == model)
         {
             it = m_fileSearchJobsToModels.erase(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    m_modelsToMetadataSearchJobs.remove(static_cast<ThumbGridModel*>(model));
-    for(auto it = m_metadataSearchJobsToModels.begin(); it != m_metadataSearchJobsToModels.end();)
-    {
-        if(it.value() == model)
-        {
-            it = m_metadataSearchJobsToModels.erase(it);
         }
         else
         {

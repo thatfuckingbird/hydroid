@@ -30,6 +30,7 @@ int ThumbGridModel::m_pageIDCounter = 0;
 ThumbGridModel::ThumbGridModel(QObject* parent) :
     QAbstractListModel(parent), m_pageID(m_pageIDCounter++)
 {
+    connect(&MetadataCache::metadataCache(), &MetadataCache::dataUpdated, this, &ThumbGridModel::handleMetadataUpdate);
 }
 
 QHash<int, QByteArray> ThumbGridModel::roleNames() const
@@ -262,35 +263,9 @@ void ThumbGridModel::clearAndLoadData(const QJsonArray& fileIDs)
     }
     updateSingleSelectedItem();
     this->setFilesLoading(false);
+    this->m_waitingForMetadataUpdate.clear();
+    this->setQueuedMetadataUpdateCount(0);
     HydroidSettings::hydroidSettings().savePageModel(this);
-}
-
-void ThumbGridModel::loadMetadata(const QJsonArray& metadata)
-{
-    if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
-    MetadataCache::metadataCache().beginDataUpdate();
-    for(int i = 0; i < metadata.size(); ++i)
-    {
-        QJsonObject obj = metadata[i].toObject();
-        int id = obj["file_id"].toInt();
-        if(auto fileEntry = m_fileIDMap.value(id, nullptr))
-        {
-            MetadataCache::metadataCache().setData(id, obj);
-            if(this->m_tagListModel && (fileEntry->selected || m_selectedFiles.isEmpty())) {
-                this->m_tagListModel->removeTags(fileEntry->id);
-                this->m_tagListModel->addTags(fileEntry->id, MetadataCache::metadataCache().entry(fileEntry->id).tags);
-            }
-        }
-        else
-        {
-            //TODO...
-        }
-    }
-    MetadataCache::metadataCache().endDataUpdate();
-    if(this->m_tagListModel) this->m_tagListModel->endUpdateTags();
-    //TODO: optimize so not the entire range is updated but only the actual changes
-    if(metadata.size()) emit this->dataChanged(this->createIndex(0, -1, &this->m_files.first()), this->createIndex(m_files.size() - 1, -1, &this->m_files.last()));
-    updateSingleSelectedItem(true);
 }
 
 int ThumbGridModel::count() const
@@ -395,11 +370,18 @@ void ThumbGridModel::setQueuedMetadataUpdateCount(int count)
 {
     m_queuedMetadataUpdateCount = count;
     emit this->queuedMetadataUpdateCountChanged(count);
+    this->setMetadataLoading(m_queuedMetadataUpdateCount > 0);
 }
 
 int ThumbGridModel::queuedMetadataUpdateCount()
 {
     return m_queuedMetadataUpdateCount;
+}
+
+void ThumbGridModel::setWaitingForMetadataUpdate(const QVector<int> &fileIDs)
+{
+    this->m_waitingForMetadataUpdate = QSet<int>{fileIDs.cbegin(), fileIDs.cend()};
+    this->setQueuedMetadataUpdateCount(this->m_waitingForMetadataUpdate.size());
 }
 
 void ThumbGridModel::setItemSelected(ThumbGridItem& item, bool selected)
@@ -457,4 +439,29 @@ void ThumbGridModel::fillTagListIfEmptySelection()
             this->m_tagListModel->endUpdateTags();
         }
     }
+}
+
+void ThumbGridModel::handleMetadataUpdate(const QVector<int> &fileIDs)
+{
+    if(fileIDs.empty()) return;
+    if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
+    int queuedUpdateFulfilledCount = 0;
+    for(auto id: fileIDs) {
+        queuedUpdateFulfilledCount += m_waitingForMetadataUpdate.remove(id);
+        if(auto fileEntry = m_fileIDMap.value(id, nullptr))
+        {
+            if(this->m_tagListModel && (fileEntry->selected || m_selectedFiles.isEmpty())) {
+                this->m_tagListModel->removeTags(fileEntry->id);
+                this->m_tagListModel->addTags(fileEntry->id, MetadataCache::metadataCache().entry(fileEntry->id).tags);
+            }
+        } else
+        {
+            //TODO...
+        }
+    }
+    if(this->m_tagListModel) this->m_tagListModel->endUpdateTags();
+    this->setQueuedMetadataUpdateCount(this->queuedMetadataUpdateCount() - queuedUpdateFulfilledCount);
+    //TODO: optimize so not the entire range is updated but only the actual changes
+    if(this->m_files.size()) emit this->dataChanged(this->createIndex(0, -1, &this->m_files.first()), this->createIndex(m_files.size() - 1, -1, &this->m_files.last()));
+    updateSingleSelectedItem(true);
 }

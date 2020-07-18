@@ -82,6 +82,24 @@ void MetadataCache::endDataUpdate()
     m_dataUpdateInProgress = false;
 }
 
+void MetadataCache::addTag(int fileID, QString tag)
+{
+    if(this->m_data.contains(fileID))
+    {
+        this->m_data[fileID].tags.insert(tag);
+        emit this->dataUpdated({fileID});
+    }
+}
+
+void MetadataCache::removeTag(int fileID, QString tag)
+{
+    if(this->m_data.contains(fileID))
+    {
+        this->m_data[fileID].tags.remove(tag);
+        emit this->dataUpdated({fileID});
+    }
+}
+
 MetadataCache::MetadataCache(QObject *parent) : QObject(parent)
 {
 

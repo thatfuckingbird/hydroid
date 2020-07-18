@@ -75,7 +75,6 @@ public:
 
     ThumbGridItem* getItemByFileID(int fileID) const;
     void clearAndLoadData(const QJsonArray& fileIDs);
-    void loadMetadata(const QJsonArray& metadata);
     int count() const;
     int singleSelectedItem() const;
     bool filesLoading() const;
@@ -87,6 +86,7 @@ public:
     int pageID() const;
     void setQueuedMetadataUpdateCount(int count);
     int queuedMetadataUpdateCount();
+    void setWaitingForMetadataUpdate(const QVector<int>& fileIDs);
 
 signals:
     void countChanged(int count);
@@ -106,9 +106,11 @@ private:
     int m_singleSelectedItem = -1;
     int m_queuedMetadataUpdateCount = 0;
     bool m_selectionChangedFlag = true;
+    QSet<int> m_waitingForMetadataUpdate;
     static int m_pageIDCounter;
     void setItemSelected(ThumbGridItem& item, bool selected);
     void setItemSelected(ThumbGridItem* item, bool selected);
     void updateSingleSelectedItem(bool force = false);
     void fillTagListIfEmptySelection();
+    void handleMetadataUpdate(const QVector<int>& fileIDs);
 };

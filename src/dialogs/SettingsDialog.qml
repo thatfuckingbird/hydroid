@@ -117,7 +117,7 @@ Dialog {
             }
 
             Label {
-                text: "Network timeout (0 to disable):"
+                text: "Network timeout in milliseconds (0 to disable):"
             }
 
             SpinBox {

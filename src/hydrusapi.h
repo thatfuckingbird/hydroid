@@ -49,7 +49,8 @@ public:
 
 public slots:
     void fileSearch(const QStringList& tags, bool inbox, bool archive, ThumbGridModel* targetModel, SearchType searchType);
-    int updateMetadata(ThumbGridModel* targetModel, const QVector<int>& fileIDs = {});
+    int updateMetadata(ThumbGridModel* targetModel);
+    int updateMetadataForIDs(const QVector<int>& fileIDs = {});
     void sendURLs(const QString& text);
     int requestFile(int fileID, bool highPriority);
     void updateFileRequestPriority(int fileID, bool highPriority);
@@ -73,8 +74,6 @@ private:
     QNetworkReply* post(const QString& endpoint, const QJsonDocument& body, bool highPriority = false);
     QMap<ThumbGridModel*, QNetworkReply*> m_modelsToFileSearchJobs;
     QMap<QNetworkReply*, ThumbGridModel*> m_fileSearchJobsToModels;
-    QMultiMap<ThumbGridModel*, QNetworkReply*> m_modelsToMetadataSearchJobs;
-    QMap<QNetworkReply*, ThumbGridModel*> m_metadataSearchJobsToModels;
     QMap<QNetworkReply*, QObject*> m_metadataSearchJobsToViewers;
     QMultiMap<QObject*, QNetworkReply*> m_viewersToMetadataSearchJobs;
     int m_fileRequestCounter = 0;
@@ -82,4 +81,5 @@ private:
     QMap<int, int> m_requestIDsToFileIDs;
     QMap<int, QNetworkReply*> m_requestIDsToFileJobs;
     QMultiMap<QNetworkReply*, int> m_fileJobsToRequestIDs;
+    QSet<QNetworkReply*> m_metadataUpdateJobs;
 };

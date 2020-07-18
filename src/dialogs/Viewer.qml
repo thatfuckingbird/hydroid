@@ -328,6 +328,12 @@ Popup {
                     "0": [hydroidSettings.getString("filterRejectTag")],
                     "1": [hydroidSettings.getString("filterAcceptTag")]
                 }
+
+                //TODO: this should be removed in favor of re-requesting (from Hydrus) file metadata after every change for the changed files
+                //This is really just a temporary hack
+                metadataCache.addTag(fileIDs[currentIndex], hydroidSettings.getString("filterRejectTag"))
+                metadataCache.removeTag(fileIDs[currentIndex], hydroidSettings.getString("filterAcceptTag"))
+
                 let metadata = metadataCache.getItemData(fileIDs[currentIndex])
                 if(metadata["valid"]) {
                     hydrusAPI.updateTags(metadata["hash"], updateData)
@@ -352,6 +358,12 @@ Popup {
                     "0": [hydroidSettings.getString("filterAcceptTag")],
                     "1": [hydroidSettings.getString("filterRejectTag")]
                 }
+
+                //TODO: this should be removed in favor of re-requesting (from Hydrus) file metadata after every change for the changed files
+                //This is really just a temporary hack
+                metadataCache.addTag(fileIDs[currentIndex], hydroidSettings.getString("filterAcceptTag"))
+                metadataCache.removeTag(fileIDs[currentIndex], hydroidSettings.getString("filterRejectTag"))
+
                 let metadata = metadataCache.getItemData(fileIDs[currentIndex])
                 if(metadata["valid"]) {
                     hydrusAPI.updateTags(metadata["hash"], updateData)

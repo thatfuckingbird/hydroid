@@ -52,6 +52,8 @@ public:
     void beginDataUpdate();
     void setData(int fileID, const QJsonObject& data);
     void endDataUpdate();
+    Q_INVOKABLE void addTag(int fileID, QString tag);
+    Q_INVOKABLE void removeTag(int fileID, QString tag);
     Q_INVOKABLE QVariantMap getItemData(int fileID) const;
 
 signals:
