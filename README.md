@@ -7,6 +7,7 @@ A Hydrus client.
 
 You will need the following Qt modules:
 * core
+* gui
 * quick
 * quickcontrols2 
 * svg
