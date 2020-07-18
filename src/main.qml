@@ -55,6 +55,10 @@ ApplicationWindow {
         } else {
             showMaximized()
         }
+        if(hydroidSettings.getBoolean("firstStart")) {
+            firstStartDialog.open()
+            hydroidSettings.setBoolean("firstStart", false)
+        }
     }
 
     ColumnLayout {
@@ -141,6 +145,11 @@ ApplicationWindow {
                     }
 
                     MenuItem {
+                        text: "First start guide"
+                        onTriggered: firstStartDialog.open()
+                    }
+
+                    MenuItem {
                         text: "About"
                         onTriggered: aboutDialog.open()
                     }
@@ -185,4 +194,7 @@ ApplicationWindow {
         id: aboutDialog
     }
 
+    FirstStartDialog {
+        id: firstStartDialog
+    }
 }

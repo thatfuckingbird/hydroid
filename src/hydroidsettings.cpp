@@ -45,6 +45,7 @@ const QVariantMap defaultSettings = {
 #else
   {"startFullScreen", false},
 #endif
+  {"firstStart", true},
   {"localTagRepoName", "my tags"}};
 
 HydroidSettings::HydroidSettings(QObject* parent) :

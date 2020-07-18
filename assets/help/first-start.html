@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Welcome to Hydroid</title>
+  </head>
+  <body>
+    <p>This is a preview version of Hydroid with only a minimal set of features implemented yet. You can open pages, do searches, view images and do some A/D filtering. That's about it for now.</p>
+    <p>In the image viewer, tapping on the right or top side will advance to the next file, while tapping on the left or bottom side will go back to the previous one. In A/D filter mode,
+    the both the left and right sides will advance to the next image, with the left side applying the reject tag and the right side applying the accept tag (which can be configured in the settings).
+    You can tap on the top or bottom in A/D filter mode to go back or advance without applying a filter tag.</p>
+    <p>To remove search terms from a query, double tap them. You can hold your finger down for a longer time on page tabs and the search button to get a popup menu.</p>
+    <p>You can view this guide any time by choosing the first start guide menu item from the main menu.</p>
+    <h3>Known issues</h3>
+    <li>
+    <ul>There is a visual bug where dialogs and menus will "jump" a little after they are opened. This is a known bug in the Qt version Hydroid currently uses.</ul>
+    <ul>The Hydrus API has a bug where it can't return metadata for some files (and will fail the whole batch request if this happens). This can cause metadata loading on Hydroid pages to stay in a "waiting" state forever.</ul>
+    <ul>The loading of image thumbnails is not rate limited currently and the many parallel requests can overload the Hydrus API causing some thumbnails to fail to load.</ul>
+    <ul>The WebAssembly version can't actually do any searches due to Qt bugs in the network backend.</ul>
+    </li>
+  </body>
+</html>

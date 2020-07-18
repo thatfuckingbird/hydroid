@@ -23,5 +23,7 @@
         <file>src/pages/FilePageTab.qml</file>
         <file>src/pages/TabPopupMenu.qml</file>
         <file>src/widgets/WideMenu.qml</file>
+        <file>src/dialogs/FirstStartDialog.qml</file>
+        <file>assets/help/first-start.html</file>
     </qresource>
 </RCC>
