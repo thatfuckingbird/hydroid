@@ -22,8 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QAbstractListModel>
 #include <QtQml>
 
-class TagListModel;
-
 struct ThumbGridItem
 {
     ThumbGridItem() {}
@@ -31,18 +29,9 @@ struct ThumbGridItem
         id(id), selected(selected) {}
     int id = -1;
     bool selected = false;
-    bool inbox = false;
-    bool trashed = false;
-    bool local = false;
-    int size = 0;
-    int width = 0;
-    int height = 0;
-    QString mime;
-    QStringList urls;
-    QSet<QString> tags;
-    QString hash;
-    bool hasMetadata = false;
 };
+
+class TagListModel;
 
 class ThumbGridModel : public QAbstractListModel
 {
@@ -80,7 +69,6 @@ public:
     Q_INVOKABLE void selectArchive();
     Q_INVOKABLE void selectWithTags(const QStringList& tags);
     Q_INVOKABLE void selectWithoutTags(const QStringList& tags);
-    Q_INVOKABLE QVariantMap getItemData(int fileID) const;
     Q_INVOKABLE void setTagListModel(TagListModel* model);
     Q_INVOKABLE QVector<int> allFileIDs() const;
     Q_INVOKABLE QVector<int> selectedFileIDs() const;

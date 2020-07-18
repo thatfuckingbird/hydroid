@@ -36,7 +36,6 @@ Popup {
     property var fileIDs: []
     property ThumbGridModel thumbGridModel: undefined
     property int currentIndex: -1
-    property var metadataCache: ({})
     property var idsToPrefetch: ({})
 
     Rectangle {
@@ -253,18 +252,12 @@ Popup {
     function acquireMetadata(ids) {
         let idsMissingMetadata = []
         for(let i = 0; i < ids.length; ++i) {
-            if(ids[i] in metadataCache) {
-                prefetchIfNeeded(ids[i], metadataCache[ids[i]])
-                if(ids[i] === fileIDs[currentIndex]) updateDisplayFromMetadata(metadataCache[ids[i]])
+            let metadata = metadataCache.getItemData(ids[i])
+            if(metadata["valid"]) {
+                prefetchIfNeeded(ids[i], metadata)
+                if(ids[i] === fileIDs[currentIndex]) updateDisplayFromMetadata(metadata)
             } else {
-                const thumbGridData = thumbGridModel.getItemData(ids[i])
-                if(thumbGridData["valid"] && thumbGridData["hasMetadata"]) {
-                    metadataCache[ids[i]] = thumbGridData
-                    prefetchIfNeeded(ids[i], metadataCache[ids[i]])
-                    if(ids[i] === fileIDs[currentIndex]) updateDisplayFromMetadata(metadataCache[ids[i]])
-                } else {
-                    idsMissingMetadata.push(ids[i])
-                }
+                idsMissingMetadata.push(ids[i])
             }
         }
         hydrusAPI.requestMetadataForViewer(viewer, idsMissingMetadata)
@@ -282,7 +275,6 @@ Popup {
     }
 
     function handleNewMetadata(fileID, metadata) {
-        metadataCache[fileID] = metadata
         if(fileID === fileIDs[currentIndex]) updateDisplayFromMetadata(metadata)
         prefetchIfNeeded(fileID, metadata)
     }
@@ -336,8 +328,9 @@ Popup {
                     "0": [hydroidSettings.getString("filterRejectTag")],
                     "1": [hydroidSettings.getString("filterAcceptTag")]
                 }
-                if(fileIDs[currentIndex] in metadataCache) {
-                    hydrusAPI.updateTags(metadataCache[fileIDs[currentIndex]]["hash"], updateData)
+                let metadata = metadataCache.getItemData(fileIDs[currentIndex])
+                if(metadata["valid"]) {
+                    hydrusAPI.updateTags(metadata["hash"], updateData)
                     floatingNotification.showNotification("Image rejected")
                 } else {
                     floatingNotification.showNotification("Can't set tag: metadata not yet loaded")
@@ -359,8 +352,9 @@ Popup {
                     "0": [hydroidSettings.getString("filterAcceptTag")],
                     "1": [hydroidSettings.getString("filterRejectTag")]
                 }
-                if(fileIDs[currentIndex] in metadataCache) {
-                    hydrusAPI.updateTags(metadataCache[fileIDs[currentIndex]]["hash"], updateData)
+                let metadata = metadataCache.getItemData(fileIDs[currentIndex])
+                if(metadata["valid"]) {
+                    hydrusAPI.updateTags(metadata["hash"], updateData)
                     floatingNotification.showNotification("Image accepted")
                 } else {
                     floatingNotification.showNotification("Can't set tag: metadata not yet loaded")

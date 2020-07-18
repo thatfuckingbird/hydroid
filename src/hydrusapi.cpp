@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <QRegularExpression>
 #include <QJsonArray>
 #include <hydroidsettings.h>
+#include "metadatacache.h"
 
 HydrusAPI::HydrusAPI(QObject* parent) :
     QObject(parent)
@@ -203,7 +204,7 @@ void HydrusAPI::updateTags(const QString& hash, QVariant updateData)
 
     doc.setObject(obj);
 
-    this->post("/add_tags/add_tags", doc); //TODO: check reply
+    this->post("/add_tags/add_tags", doc); //TODO: check reply, queue a metadata update if successful
 }
 
 QNetworkReply* HydrusAPI::get(const QString& endpoint, const QMap<QString, QString>& args, bool highPriority)
@@ -304,13 +305,16 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
         if(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200)
         {
             auto metadata = QJsonDocument::fromJson(reply->readAll())["metadata"].toArray();
+            MetadataCache::metadataCache().beginDataUpdate();
             for(const auto v: metadata)
             {
-                QVariantMap obj = v.toObject().toVariantMap();
-                obj["hasMetadata"] = true;
-                obj["valid"] = true;
-                QMetaObject::invokeMethod(viewer, "handleNewMetadata", Q_ARG(QVariant, obj["file_id"]), Q_ARG(QVariant, QVariant::fromValue(obj)));
+                QJsonObject obj = v.toObject();
+                QVariantMap map = v.toObject().toVariantMap();
+                MetadataCache::metadataCache().setData(map["file_id"].toInt(), obj);
+                map["valid"] = true;
+                QMetaObject::invokeMethod(viewer, "handleNewMetadata", Q_ARG(QVariant, map["file_id"]), Q_ARG(QVariant, QVariant::fromValue(map)));
             }
+            MetadataCache::metadataCache().endDataUpdate();
         }
         else
         {

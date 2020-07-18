@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "hydroidsettings.h"
 #include "taglistmodel.h"
 #include "hydrusapi.h"
+#include "metadatacache.h"
 
 int ThumbGridModel::m_pageIDCounter = 0;
 
@@ -155,7 +156,7 @@ void ThumbGridModel::invertSelection()
 void ThumbGridModel::selectInbox()
 {
     if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
-    for(auto& f: m_files) setItemSelected(f, f.inbox);
+    for(auto& f: m_files) setItemSelected(f, MetadataCache::metadataCache().entry(f.id).inbox);
     if(this->m_tagListModel) this->m_tagListModel->endUpdateTags();
     if(this->m_files.size()) emit this->dataChanged(this->createIndex(0, -1, &this->m_files.first()), this->createIndex(m_files.size() - 1, -1, &this->m_files.last()), {SelectedRole});
     updateSingleSelectedItem();
@@ -165,7 +166,7 @@ void ThumbGridModel::selectInbox()
 void ThumbGridModel::selectArchive()
 {
     if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
-    for(auto& f: m_files) setItemSelected(f, !f.inbox);
+    for(auto& f: m_files) setItemSelected(f, !MetadataCache::metadataCache().entry(f.id).inbox);
     if(this->m_tagListModel) this->m_tagListModel->endUpdateTags();
     if(this->m_files.size()) emit this->dataChanged(this->createIndex(0, -1, &this->m_files.first()), this->createIndex(m_files.size() - 1, -1, &this->m_files.last()), {SelectedRole});
     updateSingleSelectedItem();
@@ -181,7 +182,7 @@ void ThumbGridModel::selectWithTags(const QStringList& tags)
         int tagsFound = 0;
         for(const auto& tag: tags)
         {
-            if(f.tags.contains(tag)) tagsFound++;
+            if(MetadataCache::metadataCache().entry(f.id).tags.contains(tag)) tagsFound++;
         }
         setItemSelected(f, tagsFound == tagsSize);
     }
@@ -199,7 +200,7 @@ void ThumbGridModel::selectWithoutTags(const QStringList& tags)
         bool ok = true;
         for(const auto& tag: tags)
         {
-            if(f.tags.contains(tag))
+            if(MetadataCache::metadataCache().entry(f.id).tags.contains(tag))
             {
                 ok = false;
                 break;
@@ -213,33 +214,6 @@ void ThumbGridModel::selectWithoutTags(const QStringList& tags)
     fillTagListIfEmptySelection();
 }
 
-QVariantMap ThumbGridModel::getItemData(int fileID) const
-{
-    QVariantMap m;
-    auto item = m_fileIDMap.value(fileID, nullptr);
-    if(item)
-    {
-        m["urls"] = item->urls;
-        m["tags"] = QStringList{item->tags.begin(), item->tags.end()};
-        m["size"] = item->size;
-        m["mime"] = item->mime;
-        m["width"] = item->width;
-        m["height"] = item->height;
-        m["inbox"] = item->inbox;
-        m["trashed"] = item->trashed;
-        m["local"] = item->local;
-        m["hash"] = item->hash;
-        m["formattedSize"] = QLocale{}.formattedDataSize(item->size);
-        m["hasMetadata"] = item->hasMetadata;
-        m["valid"] = true;
-    }
-    else
-    {
-        m["valid"] = false;
-    }
-    return m;
-}
-
 void ThumbGridModel::setTagListModel(TagListModel* model)
 {
     this->m_tagListModel = model;
@@ -251,7 +225,7 @@ void ThumbGridModel::setTagListModel(TagListModel* model)
         if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
         for(const auto& f: m_selectedFiles)
         {
-            this->m_tagListModel->addTags(f->id, f->tags);
+            this->m_tagListModel->addTags(f->id, MetadataCache::metadataCache().entry(f->id).tags);
         }
         this->m_tagListModel->endUpdateTags();
     }
@@ -294,52 +268,25 @@ void ThumbGridModel::clearAndLoadData(const QJsonArray& fileIDs)
 void ThumbGridModel::loadMetadata(const QJsonArray& metadata)
 {
     if(this->m_tagListModel) this->m_tagListModel->beginUpdateTags();
+    MetadataCache::metadataCache().beginDataUpdate();
     for(int i = 0; i < metadata.size(); ++i)
     {
         QJsonObject obj = metadata[i].toObject();
         int id = obj["file_id"].toInt();
         if(auto fileEntry = m_fileIDMap.value(id, nullptr))
         {
-            fileEntry->size = obj["size"].toInt();
-            fileEntry->mime = obj["mime"].toString();
-            fileEntry->width = obj["width"].toInt();
-            fileEntry->height = obj["height"].toInt();
-            fileEntry->inbox = obj["is_inbox"].toBool();
-            fileEntry->local = obj["is_local"].toBool();
-            fileEntry->trashed = obj["is_trashed"].toBool();
-            fileEntry->hash = obj["hash"].toString();
-
-            QJsonArray urls = obj["known_urls"].toArray();
-            for(int j = 0; j < urls.size(); ++j)
-            {
-                fileEntry->urls.append(urls[j].toString());
+            MetadataCache::metadataCache().setData(id, obj);
+            if(this->m_tagListModel && (fileEntry->selected || m_selectedFiles.isEmpty())) {
+                this->m_tagListModel->removeTags(fileEntry->id);
+                this->m_tagListModel->addTags(fileEntry->id, MetadataCache::metadataCache().entry(fileEntry->id).tags);
             }
-
-            if(this->m_tagListModel && (fileEntry->selected || m_selectedFiles.isEmpty())) this->m_tagListModel->removeTags(fileEntry->id);
-
-            QJsonObject tags = obj["service_names_to_statuses_to_tags"].toObject();
-            for(const auto& tagRepo: tags.keys())
-            {
-                QJsonObject tagRepoTags = tags[tagRepo].toObject();
-                if(tagRepoTags.contains("0"))
-                {
-                    QJsonArray tagRepoCurrentTags = tagRepoTags["0"].toArray();
-                    for(int j = 0; j < tagRepoCurrentTags.size(); ++j)
-                    {
-                        fileEntry->tags.insert(tagRepoCurrentTags[j].toString());
-                    }
-                }
-            }
-
-            if(this->m_tagListModel && (fileEntry->selected || m_selectedFiles.isEmpty())) this->m_tagListModel->addTags(fileEntry->id, fileEntry->tags);
-
-            fileEntry->hasMetadata = true;
         }
         else
         {
             //TODO...
         }
     }
+    MetadataCache::metadataCache().endDataUpdate();
     if(this->m_tagListModel) this->m_tagListModel->endUpdateTags();
     //TODO: optimize so not the entire range is updated but only the actual changes
     if(metadata.size()) emit this->dataChanged(this->createIndex(0, -1, &this->m_files.first()), this->createIndex(m_files.size() - 1, -1, &this->m_files.last()));
@@ -463,7 +410,7 @@ void ThumbGridModel::setItemSelected(ThumbGridItem& item, bool selected)
         m_selectedFiles.insert(&item);
         item.selected = true;
         m_selectionChangedFlag = true;
-        if(m_tagListModel) m_tagListModel->addTags(item.id, item.tags);
+        if(m_tagListModel) m_tagListModel->addTags(item.id, MetadataCache::metadataCache().entry(item.id).tags);
     }
     else if(item.selected && !selected)
     {
@@ -505,7 +452,7 @@ void ThumbGridModel::fillTagListIfEmptySelection()
             this->m_tagListModel->beginUpdateTags();
             for(const auto& f: m_files)
             {
-                this->m_tagListModel->addTags(f.id, f.tags);
+                this->m_tagListModel->addTags(f.id, MetadataCache::metadataCache().entry(f.id).tags);
             }
             this->m_tagListModel->endUpdateTags();
         }

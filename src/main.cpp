@@ -34,6 +34,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "hydrusapi.h"
 #include "hydroidimageprovider.h"
 #include "version.h"
+#include "metadatacache.h"
 #include "filecache.h"
 
 #ifdef Q_OS_ANDROID
@@ -141,6 +142,7 @@ int main(int argc, char* argv[])
         engine.addImageProvider("hyimg", new HydroidImageProvider{});
         engine.rootContext()->setContextProperty("hydroidNativeUtils", new HydroidNativeUtils{});
         engine.rootContext()->setContextProperty("hydrusAPI", &HydrusAPI::hydrusAPI());
+        engine.rootContext()->setContextProperty("metadataCache", &MetadataCache::metadataCache());
         engine.rootContext()->setContextProperty("fileCache", &FileCache::fileCache());
         engine.rootContext()->setContextProperty("HYDROID_VERSION_MAJOR", HYDROID_VERSION_MAJOR);
         engine.rootContext()->setContextProperty("HYDROID_VERSION_MINOR", HYDROID_VERSION_MINOR);

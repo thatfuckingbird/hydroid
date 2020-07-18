@@ -17,6 +17,7 @@ SOURCES += \
         src/hydroidsettings.cpp \
         src/hydrusapi.cpp \
         src/main.cpp \
+        src/metadatacache.cpp \
         src/taglistmodel.cpp \
         src/thumbgridmodel.cpp
 
@@ -60,6 +61,7 @@ HEADERS += \
     src/hydroidnativeutils.h \
     src/hydroidsettings.h \
     src/hydrusapi.h \
+    src/metadatacache.h \
     src/taglistmodel.h \
     src/thumbgridmodel.h \
     src/version.h

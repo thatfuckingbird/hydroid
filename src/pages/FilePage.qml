@@ -244,18 +244,20 @@ ColumnLayout {
                     Layout.fillWidth: true
                     visible: thumbGridModel.singleSelectedItem != -1
                     function updateFileInfo(data) {
-                        fileMimeLabel.text = "File type: " + data["mime"]
-                        fileSizeLabel.text = "Size: "+ data["formattedSize"]
-                        dimensionsLabel.text = `Dimensions: ${data["width"]}×${data["height"]}`
-                        metadataNotLoadedLabel.visible = !data["hasMetadata"]
-                        urlListView.visible = data["hasMetadata"]
-                        urlTitleLabel.visible = data["hasMetadata"]
-                        dimensionsLabel.visible = data["hasMetadata"]
-                        fileMimeLabel.visible = data["hasMetadata"]
-                        fileSizeLabel.visible = data["hasMetadata"]
+                        metadataNotLoadedLabel.visible = !data["valid"]
+                        urlListView.visible = data["valid"]
+                        urlTitleLabel.visible = data["valid"]
+                        dimensionsLabel.visible = data["valid"]
+                        fileMimeLabel.visible = data["valid"]
+                        fileSizeLabel.visible = data["valid"]
                         urlModel.clear()
-                        for(let i = 0; i < data["urls"].length; ++i) {
-                            urlModel.append({url: data["urls"][i]})
+                        if(data["valid"]) {
+                            fileMimeLabel.text = "File type: " + data["mime"]
+                            fileSizeLabel.text = "Size: "+ data["formattedSize"]
+                            dimensionsLabel.text = `Dimensions: ${data["width"]}×${data["height"]}`
+                            for(let i = 0; i < data["urls"].length; ++i) {
+                                urlModel.append({url: data["urls"][i]})
+                            }
                         }
                     }
 
@@ -323,7 +325,7 @@ ColumnLayout {
         id: thumbGridModel
         onSingleSelectedItemChanged: {
             if(singleSelectedItem !== -1) {
-                singleFileInfo.updateFileInfo(getItemData(singleSelectedItem))
+                singleFileInfo.updateFileInfo(metadataCache.getItemData(singleSelectedItem))
             }
         }
     }
