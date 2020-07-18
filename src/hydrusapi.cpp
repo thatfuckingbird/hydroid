@@ -266,6 +266,7 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
         }
         else
         {
+            qDebug() << "Metadata search job (for model) http status code: " << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             //TODO...
         }
 
@@ -313,6 +314,7 @@ void HydrusAPI::handleNetworkReplyFinished(QNetworkReply* reply)
         }
         else
         {
+            qDebug() << "Metadata search job http status code: " << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             //TODO...
         }
     }
