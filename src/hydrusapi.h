@@ -49,8 +49,8 @@ public:
 
 public slots:
     void fileSearch(const QStringList& tags, bool inbox, bool archive, ThumbGridModel* targetModel, SearchType searchType);
-    int updateMetadata(ThumbGridModel* targetModel);
-    int updateMetadataForIDs(const QVector<int>& fileIDs = {});
+    void updateMetadata(ThumbGridModel* targetModel);
+    void updateMetadataForIDs(const QVector<int>& fileIDs = {});
     void sendURLs(const QString& text);
     int requestFile(int fileID, bool highPriority);
     void updateFileRequestPriority(int fileID, bool highPriority);

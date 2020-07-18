@@ -97,18 +97,17 @@ void HydrusAPI::fileSearch(const QStringList& tags, bool inbox, bool archive, Th
     }
 }
 
-int HydrusAPI::updateMetadata(ThumbGridModel *targetModel)
+void HydrusAPI::updateMetadata(ThumbGridModel *targetModel)
 {
     const auto ids = targetModel->allFileIDs();
     targetModel->setWaitingForMetadataUpdate(ids);
-    return this->updateMetadataForIDs(ids);
+    this->updateMetadataForIDs(ids);
 }
 
-int HydrusAPI::updateMetadataForIDs(const QVector<int>& fileIDs)
+void HydrusAPI::updateMetadataForIDs(const QVector<int>& fileIDs)
 {
-    if(fileIDs.isEmpty()) return 0;
+    if(fileIDs.isEmpty()) return;
 
-    int req_counter = 0;
     const int batchSize = HydroidSettings::hydroidSettings().getInteger("metadataRequestSize");
     for(int i = 0; i < fileIDs.size(); i += batchSize)
     {
@@ -126,9 +125,7 @@ int HydrusAPI::updateMetadataForIDs(const QVector<int>& fileIDs)
 
         auto reply = this->get("/get_files/file_metadata", searchParams);
         m_metadataUpdateJobs.insert(reply);
-        ++req_counter;
     }
-    return req_counter;
 }
 
 void HydrusAPI::sendURLs(const QString& text)
