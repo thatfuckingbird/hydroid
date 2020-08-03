@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     const QUrl url(QStringLiteral("qrc:/src/main.qml"));
     QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreated, &app, [url](QObject* obj, const QUrl& objUrl) {
-          if(!obj && url == objUrl) QCoreApplication::exit(-1);
+          if(!obj && url == objUrl) QCoreApplication::exit(EXIT_FAILURE);
       },
       Qt::QueuedConnection);
 
