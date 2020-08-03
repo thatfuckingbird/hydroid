@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     app.setApplicationName("Hydroid");
     app.setOrganizationName("Hydroid");
     app.setOrganizationDomain({});
-    app.setQuitOnLastWindowClosed(true);
+    app.setQuitOnLastWindowClosed(QGuiApplication::platformName() != "webgl");
 
 #ifdef Q_OS_ANDROID
     QtAndroid::requestPermissions({"android.permission.INTERNET"}, [](const QtAndroid::PermissionResultMap&){});
